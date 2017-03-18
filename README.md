@@ -3,15 +3,17 @@
 ## esp8266 dg_mqtt
 MQTT Device Gateway -  MircoPython code for ElectroDragon ESP Relay Board.
 
+Objective: Easy configure many devices attached to esp8266 and control / monitor them from Home Assistant via MQTT
+
 * ElectroDragon flashed with MicroPython firmware (esp8266-20160909-v1.8.4.bin) 
 * Connecting to Mosquitto MQTT server (1.4.9) 
 
-### Set-Up 
+## Set-Up 
 * Add WiFI credentials to boot.py
 * Add MQTT server configuration to config.json
 * Add configuration for each device connected to esp8266 to config.json
 
-#### Gateway 
+## Gateway 
 
 Configuration
 
@@ -37,7 +39,7 @@ Subscribes to
     payload ignored
     action = shutdown gateway and exit to WebREPL
 
-#### Switch Device
+## Switch Device
 
 Used for the 2 ElectroDragon relays on PIN 12 and 13.
 
@@ -62,7 +64,7 @@ Subscribes to
     payload in ['1', 'true', 'on', '0', 'false', 'off', 'toggle']
     action = changes the GPIO state publishes new state
  
-#### DHT22 Sensor Device
+## DHT22 Sensor Device
 Tempurature and Humidty. Used for the ElectroDragon DHT connection PIN 14
 
 Configuration
@@ -83,7 +85,7 @@ Subscribes to
     topic = "/devices/[MAC ADDR]/esp8266/Sensor/DHT22/[GPIO]/get"
     action = publish sensor value
 
-#### Moisture Sensor Device
+## Moisture Sensor Device
 Soil Hygrometer 
 
 Configuration
