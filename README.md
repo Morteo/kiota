@@ -1,4 +1,4 @@
-# KIOT Karl's Internet of Things kiot
+# KIOT Karl's Internet of Things
 
 ## esp8266 dg_mqtt
 MQTT Device Gateway -  MircoPython code for ElectroDragon ESP Relay Board.
@@ -15,14 +15,19 @@ MQTT Device Gateway -  MircoPython code for ElectroDragon ESP Relay Board.
 
 Configuration
 
-  "Gateway": {  
-    "server": "192.168.1.99",
-    "username": "*secret*",
-    "password": "*secret*"
-  },
-  "Devices": [
-  ]
-  ),
+    "Gateway": {  
+      "server": "192.168.1.99",
+      "username": "*secret*",
+      "password": "*secret*"
+    },
+    "Devices": [
+      ]
+    )
+
+Publishes on
+
+    topic = "/devices/[MAC ADDR]/esp8266"
+    payload = { 'connected': '/devices/[MAC ADDR]/esp8266/[DEVICE TYPE]/[DEVICE INFO]' }
 
 Subscribes to
 
@@ -31,18 +36,6 @@ Subscribes to
     action = shutdown gateway and exit to WebREPL
 
 #### Devices 
-
-Configuration
-
-    "type":  "Switch" | "Sensor", 
-    "description": "short text",
-    "push_frequency": -1, // frequency in seconds that status is published.Use  -1 for status push
-
-On instantiation publishes
-
-    topic = "/devices/[MAC ADDR]/esp8266"
-    payload = { 'connected': '/devices/[MAC ADDR]/esp8266/[DEVICE TYPE]/[DEVICE INFO]' }
-
 
 **Switch Device**
 
@@ -53,6 +46,12 @@ Configuration
     "type": "Switch", 
     "gpio": 12,
     "state": false, // The state to initialze the GPIO 
+    "description": "short text",
+    "push_frequency": -1, // frequency in seconds that status is published.Use  -1 for status push
+
+Publishes on
+
+    topic = "/devices/[MAC ADDR]/esp8266/Switch/[GPIO]"
 
 Subscribes to
 
@@ -72,12 +71,18 @@ Configuration
     "type": "Sensor", 
     "sensor": "DHT22",
     "gpio": 14,  
+    "description": "short text",
+    "push_frequency": -1, // frequency in seconds that status is published.Use  -1 for status push
+
+Publishes on
+
+    topic = "/devices/[MAC ADDR]/esp8266/Sensor/DHT22/[GPIO]"
+    payload = { 'temperature': [99], "humidity":  [99] }
 
 Subscribes to
 
     topic = "/devices/[MAC ADDR]/esp8266/Sensor/DHT22/[GPIO]/get"
     action = publish sensor value
-    payload = { 'temperature': [99], "humidity":  [99] }
 
 **Moisture Sensor Device** - Soil Hygrometer 
 
@@ -87,10 +92,16 @@ Configuration
     "sensor": "Moisture",
     "gpio": 5,
     "gpio_ADC": 0
+    "description": "short text",
+    "push_frequency": -1, // frequency in seconds that status is published.Use  -1 for status push
+
+Publishes on
+
+    topic = "/devices/[MAC ADDR]/esp8266/Sensor/Moisture/[GPIO]"
+    payload = { 'moisture': [99] }
 
 Subscribes to
 
     topic = "/devices/[MAC ADDR]/esp8266/Sensor/Moisture/[GPIO]/get"
     action = publish sensor value
-    payload = { 'moisture': [99] }
 
