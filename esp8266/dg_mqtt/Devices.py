@@ -55,8 +55,8 @@ class Sensor(Device):
   default_config = {
         "push_frequency": 60,
         "sensor": "Moisture",
-        "gipo": 4,
-        "gipo_ADC": 0
+        "gpio": 4,
+        "gpio_ADC": 0
   }
   
   def __init__(self, config):
@@ -66,7 +66,7 @@ class Sensor(Device):
 
   def connect(self, gateway):
     
-      super().connect(gateway, str(self.config["sensor"]) + "/" + str(self.config["gipo"]))
+      super().connect(gateway, str(self.config["sensor"]) + "/" + str(self.config["gpio"]))
 
       self.gateway.subscribe(self.topic_stem+"/get")
 
@@ -89,14 +89,14 @@ class Sensor(Device):
   
     try:
       if self.config["sensor"] ==  "DHT22":
-        d = dht.DHT22(machine.Pin(self.config["gipo"]))
+        d = dht.DHT22(machine.Pin(self.config["gpio"]))
         d.measure()
         payload = { 'temperature': str(d.temperature()), "humidity": str(d.humidity()) }
       elif self.config["sensor"] == "Moisture": 
-        vpin = machine.Pin(self.config["gipo"], machine.Pin.OUT)
+        vpin = machine.Pin(self.config["gpio"], machine.Pin.OUT)
         vpin.value(True)
         # time.sleep(0.01)
-        payload = { 'moisture': str(machine.ADC(self.config["gipo_ADC"]).read()) }
+        payload = { 'moisture': str(machine.ADC(self.config["gpio_ADC"]).read()) }
         vpin.value(False)
 
       self.gateway.publish(self.topic_stem, json.dumps(payload))
@@ -111,7 +111,7 @@ class Switch(Device):
 
   default_config = {
         "push_frequency": -1,
-        "gipo": 12,
+        "gpio": 12,
         "state": False
   }
   
@@ -120,11 +120,11 @@ class Switch(Device):
     self.config = self.default_config.copy()
     self.config.update(config)
     
-    self.pin = machine.Pin(self.config["gipo"], machine.Pin.OUT)
+    self.pin = machine.Pin(self.config["gpio"], machine.Pin.OUT)
 
   def connect(self, gateway):
     
-      super().connect(gateway, str(self.config["gipo"]))
+      super().connect(gateway, str(self.config["gpio"]))
 
       self.gateway.subscribe(self.topic_stem+"/get")
       self.gateway.subscribe(self.topic_stem+"/set")

@@ -8,28 +8,28 @@
     {
         "type": "Switch", 
         "push_frequency": -1,
-        "gipo": 12,
+        "gpio": 12,
         "state": false,
         "description": "Centre Out"
     },
     {
         "type": "Switch",
         "push_frequency": -1,
-        "gipo": 13,
+        "gpio": 13,
         "state": false,
         "description": "Corner Out"
     },
     {
         "type": "Switch",
         "push_frequency": 1,
-        "gipo": 4,
+        "gpio": 4,
         "state": false,
         "description": "PIR"
     },
     {
         "type": "Switch",
         "push_frequency": 60,
-        "gipo": 14,
+        "gpio": 14,
         "state": false,
         "description": "Moisture Switch"
     },
@@ -37,14 +37,14 @@
         "type": "Sensor", 
         "sensor": "DHT22",
         "push_frequency": 60,
-        "gipo": 14,
+        "gpio": 14,
     },
     {
         "type": "Sensor",
         "sensor": "Moisture",
         "push_frequency": 60,
-        "gipo": 5,
-        "gipo_ADC": 0
+        "gpio": 5,
+        "gpio_ADC": 0
     }
   ]
 }
