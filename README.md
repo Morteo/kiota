@@ -37,9 +37,7 @@ Subscribes to
     payload ignored
     action = shutdown gateway and exit to WebREPL
 
-#### Devices 
-
-**Switch Device**
+#### Switch Device
 
 Used for the 2 ElectroDragon relays on PIN 12 and 13.
 
@@ -64,9 +62,8 @@ Subscribes to
     payload in ['1', 'true', 'on', '0', 'false', 'off', 'toggle']
     action = changes the GPIO state publishes new state
  
-**DHT22 Sensor Device** - Tempurature and Humidty
-
-Used for the ElectroDragon DHT connection PIN 14
+#### DHT22 Sensor Device
+Tempurature and Humidty. Used for the ElectroDragon DHT connection PIN 14
 
 Configuration
 
@@ -86,7 +83,8 @@ Subscribes to
     topic = "/devices/[MAC ADDR]/esp8266/Sensor/DHT22/[GPIO]/get"
     action = publish sensor value
 
-**Moisture Sensor Device** - Soil Hygrometer 
+#### Moisture Sensor Device
+Soil Hygrometer 
 
 Configuration
 
