@@ -108,6 +108,7 @@ Subscribes to
     action = publish sensor value
 
 ## Home Assistant
+[https://github.com/home-assistant/home-assistant]
 
 Example configuration.yaml extract
 

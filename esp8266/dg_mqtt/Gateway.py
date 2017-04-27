@@ -1,8 +1,11 @@
 import time
 import ubinascii
+import uhashlib
 import network
+import machine
+import sys
 from umqtt.simple import MQTTClient
-from dg_mqtt.Devices import Device
+from dg_mqtt.Device import Device
 from dg_mqtt.Util import Log
 from dg_mqtt.Util import ConfigFile
 
@@ -12,6 +15,7 @@ class ExitGatewayException(Exception):
 class Gateway:
  
   default_config = {
+    'version': 2,
     'server': '127.1.1.1',
     'port': 1883,
     'keep_alive': 60,
@@ -27,17 +31,49 @@ class Gateway:
     self.config = self.default_config.copy()
     self.config.update(config["Gateway"])
     self.devices = []
-    
-#    self.client_id = "/devices/esp8266_" + ubinascii.hexlify(machine.unique_id()).decode()
-    self.client_id = "/devices/" + ubinascii.hexlify(network.WLAN().config('mac')).decode() + "/esp8266"
-    self.client = MQTTClient(self.client_id, self.config['server'], self.config['port'], self.config['username'], self.config['password'], self.config['keep_alive'])
+
+    if self.config['id'] is None:
+      self.config['id'] = ubinascii.hexlify(uhashlib.sha256(machine.unique_id()).digest()).decode()
+
+    if self.config['version'] is None:
+        self.topic = "/devices/" +ubinascii.hexlify(network.WLAN().config('mac')).decode() + "/esp8266"
+    else:
+        self.topic = "/devices/" + self.config['id']
+
+    self.client = MQTTClient(self.topic, self.config['server'], self.config['port'], self.config['username'], self.config['password'], self.config['keep_alive'])
     self.client.set_callback(self.do_message_callback)
-    self.exit_topic = self.client_id+"/Gateway/exit"
+    self.exit_topic = self.topic+"/gateway/exit"
     
+    for device_config in config["Devices"]:
+
+      device_config.setdefault("module", None)
+      device_config.setdefault("id", None)
+      device_config.setdefault("description", None)
+      
+      try:
+        
+        class_name =  device_config["type"]
+        print(class_name)
+
+        module_name = "dg_mqtt"
+        if device_config["module"] is not None:
+          module_name = device_config["module"]
+        print(module_name)
+
+        module = __import__(module_name, class_name)
+        #module = sys.import_module(module_name)
+        print(module)
+        
+        klass = getattr(module, class_name)
+        #klass = module[class_name]
+        print(klass)
     
-    for dconfig in config["Devices"]:
-      device = Device.initDevice(dconfig)
-      self.devices.append(device)  
+        device = klass(device_config)
+        self.devices.append(device) 
+        
+      except ImportError as e:
+        Log.log(self,"error: '{}' config: '{}'".format(e,device_config))
+
 
   def connect(self):
     self.client.connect()
@@ -64,7 +100,7 @@ class Gateway:
           #time.sleep(0.01) # attempt to reduce number of OSError: [Errno 104] ECONNRESET 
           self.client.check_msg()
           #time.sleep(0.01) # attempt to reduce number of OSError: [Errno 104] ECONNRESET 
-          self.do_push()
+          self.push()
           time.sleep(0.01)
       except OSError as e:
           Log.log(self,"failed to connect, retrying....", e)
@@ -80,12 +116,12 @@ class Gateway:
       import sys
       sys.print_exception(e)
     
-  def do_push(self):
+  def push(self):
     if time.time() > self.last_ping + self.config["keep_alive"]/3:
       self.last_ping = time.time()
       self.client.ping()
     for device in self.devices: 
-      device.do_push()
+      device.push()
       
   def do_message_callback(self, b_topic, payload):
     topic = b_topic.decode() #convert to string
@@ -95,3 +131,4 @@ class Gateway:
     for device in self.devices: 
       if device.do_message(topic, payload):
         break
+        
