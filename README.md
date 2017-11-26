@@ -1,5 +1,11 @@
 # KIOT Karl's Internet of Things
 
+# Warning : 
+```diff
+- The below instructions are for release 1
+- Instructions for release 3 coming soon
+```
+
 ## esp8266 dg_mqtt
 MQTT Device Gateway -  MircoPython code for ElectroDragon ESP Relay Board.
 
