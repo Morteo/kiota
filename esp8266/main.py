@@ -1,9 +1,29 @@
 from dg_mqtt.gateway import Gateway
-from dg_mqtt.Util import ConfigFile
+
+
+def do_connect():
+    import network
+
+    SSID = 'MORTEO_NET'
+    PASSWORD = 'M0rt30_n3t'
+
+    sta_if = network.WLAN(network.STA_IF)
+    ap_if = network.WLAN(network.AP_IF)
+    if ap_if.active():
+        ap_if.active(False)
+    if not sta_if.isconnected():
+        print('connecting to network...')
+        sta_if.active(True)
+        sta_if.connect(SSID, PASSWORD)
+        while not sta_if.isconnected():
+            pass
+    print('Network configuration:', sta_if.ifconfig())
+
+
+do_connect()
 
 try:
-  config = ConfigFile('dg_mqtt/config.json').config
-  Gateway(config).start()
+  gateway = Gateway('config.json')
 except Exception as e:
   import sys
   sys.print_exception(e)
@@ -12,3 +32,4 @@ except Exception as e:
 
 import webrepl
 webrepl.start()
+

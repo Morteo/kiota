@@ -1,13 +1,13 @@
 import machine
 from dg_mqtt.Device import Device
 
-class SwitchDevice(Device):
+class TriggerDevice(Device):
 
   default_config = {
-    "poll_frequency": None,
-    "publish_changes_only": False,
-    "gpio": 12,
-    "state": False
+        "poll_frequency": 1,
+        "publish_changes_only": True,
+        "gpio": 4,
+        "state": None
   }
   
   def __init__(self, config):
@@ -21,7 +21,11 @@ class SwitchDevice(Device):
       self.pin.value(bool(self.config['state']))
   
   def read(self):
+
     payload = { "state": bool(self.pin.value()) }
+    
+    Util.log(self,"read state payload: '{}' from pin: '{}'".format( payload,self.config["gpio"]))
+    
     return payload
     
   def write(self, payload):

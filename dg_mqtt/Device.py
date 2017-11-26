@@ -9,8 +9,7 @@ class Device:
     "id": None,
     "description": None,
     "poll_frequency": None,
-    "publish_changes_only": False,
-    "id": None
+    "publish_changes_only": False
   }
   
   def __init__(self, config):
@@ -54,12 +53,12 @@ class Device:
 
     if topic.endswith("/get"):
 
-      self.publish()
+      self.publish(self.read())
       return True
                         
     elif topic.endswith("/set"):
       
-      self.write(payload)
+      self.publish(self.write(payload))
       return True
 
     elif topic.endswith("/configure"):
@@ -69,9 +68,10 @@ class Device:
 
     return False
 
-  def publish(self):
+  def publish(self, payload):
 
-    payload = self.read()
+    if payload is None:
+      return
     
     if self.config["publish_changes_only"] is False or payload != self.last_payload:
       try:
@@ -89,7 +89,7 @@ class Device:
     if time.time() > self.last_push + self.config["poll_frequency"]:
 
       self.last_push = time.time()
-      self.publish()
+      self.publish(self.read())
 
       return True
                         

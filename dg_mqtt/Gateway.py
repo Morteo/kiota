@@ -1,13 +1,22 @@
-import time
-import ubinascii
-import uhashlib
-import network
-import machine
 import sys
+import time
+import json
+
+import machine
 from umqtt.simple import MQTTClient
+
+try:
+  import ubinascii
+except ImportError:
+  import binascii as ubinascii 
+
+try:
+  import uhashlib
+except ImportError:
+  import hashlib as uhashlib
+ 
 from dg_mqtt.Device import Device
-from dg_mqtt.Util import Log
-from dg_mqtt.Util import ConfigFile
+import dg_mqtt.Util as Util
 
 class ExitGatewayException(Exception):
     pass
@@ -26,19 +35,25 @@ class Gateway:
   
   last_ping = 0
 
-  def __init__(self, config):
+  def __init__(self, config_filename='config.json', start=True):
+    self.configure(Util.loadConfig(config_filename))
+    if start:
+      self.start()
+    
+  def configure(self, config):
 
     self.config = self.default_config.copy()
     self.config.update(config["Gateway"])
     self.devices = []
 
     if self.config['id'] is None:
-      self.config['id'] = ubinascii.hexlify(uhashlib.sha256(machine.unique_id()).digest()).decode()
+        self.config['id'] = ubinascii.hexlify(uhashlib.sha256(machine.unique_id()).digest()).decode()
 
-    if self.config['version'] is None:
-        self.topic = "/devices/" +ubinascii.hexlify(network.WLAN().config('mac')).decode() + "/esp8266"
-    else:
-        self.topic = "/devices/" + self.config['id']
+#    if self.config['version'] is None:
+#        import network
+#        self.topic = "/devices/" +ubinascii.hexlify(network.WLAN().config('mac')).decode() + "/esp8266"
+#    else:
+    self.topic = "/devices/" + self.config['id']
 
     self.client = MQTTClient(self.topic, self.config['server'], self.config['port'], self.config['username'], self.config['password'], self.config['keep_alive'])
     self.client.set_callback(self.do_message_callback)
@@ -72,24 +87,22 @@ class Gateway:
         self.devices.append(device) 
         
       except ImportError as e:
-        Log.log(self,"error: '{}' config: '{}'".format(e,device_config))
+        Util.log(self,"error: '{}' config: '{}'".format(e,device_config))
 
 
   def connect(self):
     self.client.connect()
-    Log.log(self,"connect to MQTT server on {}:{} as {}".format(self.config['server'], self.config['port'], self.config['username']))
+    Util.log(self,"connect to MQTT server on {}:{} as {}".format(self.config['server'], self.config['port'], self.config['username']))
     self.subscribe(self.exit_topic)
     for device in self.devices: 
       device.connect(self)
 
   def subscribe(self, topic):
     self.client.subscribe(topic.encode())
-#    time.sleep(0.01) # attempt to reduce number of OSError: [Errno 104] ECONNRESET 
         
   def publish(self, topic, payload):
-    Log.log(self,"publish topic: '{}' payload: '{}'".format(topic,payload))
+    Util.log(self,"sent: topic '{}' payload: '{}'".format(topic,payload))
     self.client.publish(topic.encode('utf-8'), payload)
-#    time.sleep(0.01) # attempt to reduce number of OSError: [Errno 104] ECONNRESET 
     
   def start(self):
 
@@ -103,18 +116,10 @@ class Gateway:
           self.push()
           time.sleep(0.01)
       except OSError as e:
-          Log.log(self,"failed to connect, retrying....", e)
+          Util.log(self,"failed to connect, retrying....", e)
           time.sleep(self.config["wait_to_reconnect"])
 
     self.client.disconnect()
-    
-  def main(config_filename):
-    try:
-      config = ConfigFile(config_filename).config
-      Gateway(config).start()
-    except Exception as e:
-      import sys
-      sys.print_exception(e)
     
   def push(self):
     if time.time() > self.last_ping + self.config["keep_alive"]/3:
@@ -125,10 +130,11 @@ class Gateway:
       
   def do_message_callback(self, b_topic, payload):
     topic = b_topic.decode() #convert to string
-    Log.log(self,"message received: '{}' payload: '{}'".format(topic,payload))
+    Util.log(self,"received: topic '{}' payload: '{}'".format(topic,payload))
     if topic == self.exit_topic:
       raise ExitGatewayException()
     for device in self.devices: 
       if device.do_message(topic, payload):
+#        Util.log(self,"consumed: topic '{}' payload: '{}' by device {}".format(topic,payload,json.dumps(device.config)))
         break
         
