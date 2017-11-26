@@ -4,8 +4,9 @@ from dg_mqtt.Gateway import Gateway
 from dg_mqtt.Util import ConfigFile
 
 try:
-  config = ConfigFile('config.json').config
+  config = ConfigFile('config/config.json').config
   print("config: {}".format(json.dumps(config)))
+  config.update(ConfigFile('config/__secret__/config.json').config)
 
   Gateway(config).start()
 except Exception as e:

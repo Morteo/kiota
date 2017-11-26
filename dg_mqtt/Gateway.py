@@ -24,13 +24,15 @@ class ExitGatewayException(Exception):
 class Gateway:
  
   default_config = {
-    'version': 2,
-    'server': '127.1.1.1',
-    'port': 1883,
-    'keep_alive': 60,
+    'version': 3,
     'wait_to_reconnect': 5,
-    'username': None,
-    'password': None
+    'MQTTServer': {
+      'server': "192.168.1.123",
+      'port': 1883,
+      'keep_alive': 60,
+      'username": "********",
+      'password": "********"
+    }
   }
   
   last_ping = 0
@@ -55,7 +57,12 @@ class Gateway:
 #    else:
     self.topic = "/devices/" + self.config['id']
 
-    self.client = MQTTClient(self.topic, self.config['server'], self.config['port'], self.config['username'], self.config['password'], self.config['keep_alive'])
+    self.client = MQTTClient(self.topic, 
+                             self.config['MQTTServer']['server'], 
+                             self.config['MQTTServer']['port'], 
+                             self.config['MQTTServer']['username'], 
+                             self.config['MQTTServer']['password'], 
+                             self.config['MQTTServer']['keep_alive'])
     self.client.set_callback(self.do_message_callback)
     self.exit_topic = self.topic+"/gateway/exit"
     
@@ -92,7 +99,7 @@ class Gateway:
 
   def connect(self):
     self.client.connect()
-    Util.log(self,"connect to MQTT server on {}:{} as {}".format(self.config['server'], self.config['port'], self.config['username']))
+    Util.log(self,"connect to MQTT server on {}:{} as {}".format(self.config['MQTTServer']['server'], self.config['port'], self.config['username']))
     self.subscribe(self.exit_topic)
     for device in self.devices: 
       device.connect(self)
@@ -122,7 +129,7 @@ class Gateway:
     self.client.disconnect()
     
   def push(self):
-    if time.time() > self.last_ping + self.config["keep_alive"]/3:
+    if time.time() > self.last_ping + self.config['MQTTServer']["keep_alive"]/3:
       self.last_ping = time.time()
       self.client.ping()
     for device in self.devices: 

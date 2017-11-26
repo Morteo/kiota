@@ -1,0 +1,37 @@
+{
+  "Gateway": {  
+    "version": 3,
+    "id": "water",
+    "description": "Pi Zero Water Pump"
+  },
+  "Devices": [
+    {
+        "type": "SwitchDevice", 
+        "id": "tap_A", 
+        "gpio": 6,
+        "state": false,
+        "description": "Relay1"
+    },
+    {
+        "type": "SwitchDevice", 
+        "id": "tap_B", 
+        "gpio": 13,
+        "state": false,
+        "description": "Relay2"
+    },
+    {
+        "type": "SwitchDevice", 
+        "id": "tap_C", 
+        "gpio": 19,
+        "state": false,
+        "description": "Relay3"
+    },
+    {
+        "type": "SwitchDevice", 
+        "id": "tap_D", 
+        "gpio": 26,
+        "state": false,
+        "description": "Relay4"
+    }
+  ]
+}
