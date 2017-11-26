@@ -1,5 +1,16 @@
 {
+  "WiFi": {  
+    "SSID": "*** secret ***",
+    "password": "*** secret ***",
+  },
   "Gateway": {  
+    "MQTTServer": {  
+      "server": "192.168.1.123",
+      "port": 1883,
+      "username": "*** secret ***",
+      "password": "*** secret ***",
+      "keep_alive": 60
+    },
     "version": 3,
     "id": "gate irrigation point",
     "description": "ElectroDragon ESP2866"
@@ -49,9 +60,9 @@
         "gpio": 15,
         "retries": 50,
         "start_value": false,
-        "pattern": "*** secret",
-        "pulses": "*** secret",
-        "timings": "*** secret",
+        "pattern": "*** secret ***",
+        "pulses": "*** secret ***",
+        "timings": "*** secret ***",
         "description": "RF 433Mhz transmitter"
     }
   ]

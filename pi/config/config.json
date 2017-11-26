@@ -1,5 +1,16 @@
 {
+  "WiFi": {  
+    "SSID": "*** secret ***",
+    "password": "*** secret ***",
+  },
   "Gateway": {  
+    "MQTTServer": {  
+      "server": "192.168.1.123",
+      "port": 1883,
+      "username": "*** secret ***",
+      "password": "*** secret ***",
+      "keep_alive": 60
+    },
     "version": 3,
     "id": "water",
     "description": "Pi Zero Water Pump"
