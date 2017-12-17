@@ -1,4 +1,4 @@
-# KIOT Karl's Internet of Things Automation
+# Karl's Internet of Things Automation (KIOTA)
 
 ## KIOTA Configuration and Installation (for MicroPython)
 
