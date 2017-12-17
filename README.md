@@ -14,3 +14,6 @@ https://docs.google.com/document/d/1rVSjYooZOafJAFnN9s3acbcbkP209FklLaywAFqVM3E/
 
 Coming soon
 
+## Adding a switch (KIOTA SwitchDevice)
+
+https://docs.google.com/document/d/13lTJTqvVYkFD7V9Wt73OWTx8l203wv2o7Dk7Eqdw-kA/edit?usp=sharing
