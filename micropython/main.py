@@ -20,7 +20,7 @@ def connectWifi(SSID, password):
 
 try:
   config = Util.loadConfig('config/config.json')['WiFi']
-  secret = Util.loadConfig('config/__secret__/config.json')['WiFi']
+  secret = Util.loadConfig('config/__secret__/secret.json')['WiFi']
   config = Util.mergeConfig(config,secret)
   #  print("WiFi config: {}".format(json.dumps(config)))
   connectWifi(config['SSID'], config['password'])

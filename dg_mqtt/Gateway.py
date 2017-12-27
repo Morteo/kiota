@@ -41,7 +41,7 @@ class Gateway:
   def __init__(self, start=True):
 
     config = Util.loadConfig('config/config.json')
-    secret = Util.loadConfig('config/__secret__/config.json')
+    secret = Util.loadConfig('config/__secret__/secret.json')
     config = Util.mergeConfig(config, secret)
     
     self.config =  Util.mergeConfig(self.default_config.copy(), config['Gateway'])
