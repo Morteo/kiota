@@ -1,6 +1,6 @@
 import json
 from dg_mqtt.Gateway import Gateway
-from dg_mqtt.Util import ConfigFile
+import dg_mqtt.Util as Util
 
 def connectWifi(SSID, password):
     import network
@@ -19,12 +19,13 @@ def connectWifi(SSID, password):
 
 
 try:
-  config = ConfigFile('config/config.json').config
-  print("config: {}".format(json.dumps(config)))
-  config.update(ConfigFile('config/__secret__/config.json').config)
-  connectWifi(config['WiFi']['SSID'], config['WiFi']['password'])
-  
-  Gateway(config).start()
+  config = Util.loadConfig('config/config.json')['WiFi']
+  secret = Util.loadConfig('config/__secret__/config.json')['WiFi']
+  config = Util.mergeConfig(config,secret)
+  #  print("WiFi config: {}".format(json.dumps(config)))
+  connectWifi(config['SSID'], config['password'])
+
+  Gateway().start()
 except Exception as e:
   import sys
   sys.print_exception(e)
@@ -32,5 +33,8 @@ except Exception as e:
 # Gateway received a ../Gateway/exit message from MQTT server or encountered an unanticipated excpetion
 
 import webrepl
-webrepl.start()
+# first time use of webREPL set it up 
+#import webrepl_setup
+#webrepl.start()
+#webrepl._webrepl.password("<password>")
 

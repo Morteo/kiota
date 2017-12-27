@@ -33,3 +33,45 @@ def saveConfig(config, filepath):
     print('saveConfig: failed to save to file: {}'.format(filepath))
   else:
     print('saveConfig: saved to file: {}'.format(filepath))
+    
+    
+def mergeConfig(base, update):
+    
+    if update is None:
+        return base 
+      
+    for key in base:
+
+      try:
+        update_value = update[key]
+      except (KeyError):
+        None
+      else:
+        if update_value is not None:
+          
+          base_value = base[key]
+          if isinstance(base_value, dict) and isinstance(update_value, dict):
+            base[key] = mergeConfig(base_value, update_value)
+          else:
+            base[key] = update_value
+                    
+    for key in update:
+      
+      if key not in base:
+          base[key] = update[key]
+          
+    return base;
+                   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+

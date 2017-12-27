@@ -24,28 +24,35 @@ class ExitGatewayException(Exception):
 class Gateway:
  
   default_config = {
-    'version': 3,
-    'wait_to_reconnect': 5,
-    'MQTTServer': {
-      'server': "192.168.1.123",
-      'port': 1883,
-      'keep_alive': 60,
-      'username": "********",
-      'password": "********"
+    "Gateway": {  
+      'MQTTServer': {
+        'server': "192.168.1.123",
+        'port': 1883,
+        'keep_alive': 60,
+        'username': "********",
+        'password': "********",
+        'wait_to_reconnect': 5
+      }
     }
   }
   
   last_ping = 0
 
-  def __init__(self, config_filename='config.json', start=True):
-    self.configure(Util.loadConfig(config_filename))
+  def __init__(self, start=True):
+
+    config = Util.loadConfig('config/config.json')
+    secret = Util.loadConfig('config/__secret__/config.json')
+    config = Util.mergeConfig(config, secret)
+    
+    self.config =  Util.mergeConfig(self.default_config.copy(), config['Gateway'])
+    
+    self.configure(config)
+
     if start:
       self.start()
     
   def configure(self, config):
 
-    self.config = self.default_config.copy()
-    self.config.update(config["Gateway"])
     self.devices = []
 
     if self.config['id'] is None:
@@ -99,7 +106,10 @@ class Gateway:
 
   def connect(self):
     self.client.connect()
-    Util.log(self,"connect to MQTT server on {}:{} as {}".format(self.config['MQTTServer']['server'], self.config['port'], self.config['username']))
+    Util.log(self,"connect to MQTT server on {}:{} as {}".format(
+        self.config['MQTTServer']['server'], 
+        self.config['MQTTServer']['port'], 
+        self.config['MQTTServer']['username']))
     self.subscribe(self.exit_topic)
     for device in self.devices: 
       device.connect(self)
@@ -124,7 +134,7 @@ class Gateway:
           time.sleep(0.01)
       except OSError as e:
           Util.log(self,"failed to connect, retrying....", e)
-          time.sleep(self.config["wait_to_reconnect"])
+          time.sleep(self.config['MQTTServer']["wait_to_reconnect"])
 
     self.client.disconnect()
     
