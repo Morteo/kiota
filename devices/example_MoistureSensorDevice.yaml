@@ -1,0 +1,15 @@
+# This file can be included in your hass configuration.yaml 
+# add the below in the "homeassistant:" section
+#  
+#  packages: 
+#    kiota_kitchen: !include /home/pi/working/kiota/devices/example_MoistureSensorDevice.yaml
+
+sensor:
+
+  - name: "Example Moisture"
+    platform: mqtt
+    state_topic: "/devices/example/moisture_sensor"
+    qos: 0
+    unit_of_measurement: "#"
+    value_template: '{{ value_json.moisture }}'  
+

@@ -1,0 +1,23 @@
+{
+  "Gateway": {  
+    "id": "example",
+    "description": "Example",
+    "type": "electrodragon-wifi-iot-relay-board-spdt-based-esp8266"
+  },
+  "Devices": [
+    {
+        "id": "heating", 
+        "description": "Relay centre out controls heating on/off",
+        "type": "SwitchDevice", 
+        "gpio": 12,
+        "state": false
+    },
+    {
+        "id": "light", 
+        "description": "Relay corner out controls ceiling light on/off",
+        "type": "SwitchDevice", 
+        "gpio": 13,
+        "state": false
+    }
+  ]
+}

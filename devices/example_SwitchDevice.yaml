@@ -1,0 +1,30 @@
+# This file can be included in your hass configuration.yaml 
+# add the below in the "homeassistant:" section
+#  
+#  packages: 
+#    kiota_kitchen: !include /home/pi/working/kiota/devices/example_SwitchDevice.yaml
+
+switch:
+  
+  - name: "Example Heating"
+    platform: mqtt
+    icon: mdi:access-point-network
+    state_topic: "/devices/example/heating"
+    command_topic: "/devices/example/heating/set"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+
+  - name: "Example Light"
+    platform: mqtt
+    state_topic: "/devices/example/light"
+    command_topic: "/devices/example/light/set"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  

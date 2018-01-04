@@ -1,0 +1,85 @@
+# This file can be included in your hass configuration.yaml 
+# add the below in the "homeassistant:" section
+#
+#  packages: 
+#    kiota_kitchen: !include /home/pi/working/kiota/devices/example.yaml
+#
+# some optional customisations, again put in the "homeassistant" section
+#
+#  customize_glob:
+#    "sensor.*_temperature":
+#      icon: mdi:thermometer-lines
+#    "sensor.*_humidity":
+#      icon: mdi:water-percent
+#    "sensor.*_moisture":
+#      icon: mdi:chart-bubble
+#    "device_tracker.*_mcu":
+#      icon: mdi:access-point-network
+#
+#  customize:
+#    switch.example_light:
+#      icon: mdi:ceiling-light
+#    switch.example_heating:
+#      icon: mdi:radiator
+
+group:
+  mcu_example:
+    name: "Example"
+#    view: no
+    icon: mdi:access-point-network
+    entities:
+#      -   device_tracker.example
+      -   switch.example_heating
+      -   switch.example_light      
+      -   sensor.example_temperature      
+      -   sensor.example_humidity     
+      -   sensor.example_moisture     
+
+switch:
+  
+  - name: "Example Heating"
+    platform: mqtt
+    icon: mdi:access-point-network
+    state_topic: "/devices/example/heating"
+    command_topic: "/devices/example/heating/set"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+
+  - name: "Example Light"
+    platform: mqtt
+    state_topic: "/devices/example/light"
+    command_topic: "/devices/example/light/set"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+
+sensor:
+
+  - name: "Example Temperature"
+    platform: mqtt
+    state_topic: "/devices/example/temperature_and_humidity_sensor"
+    qos: 0
+    unit_of_measurement: "°C"
+    value_template: '{{ value_json.temperature }}'  
+
+  - name: "Example Humidity"
+    platform: mqtt
+    state_topic: "/devices/example/temperature_and_humidity_sensor"
+    qos: 0
+    unit_of_measurement: "%"
+    value_template: '{{ value_json.humidity }}'  
+
+  - name: "Example Moisture"
+    platform: mqtt
+    state_topic: "/devices/example/moisture_sensor"
+    qos: 0
+    unit_of_measurement: "#"
+    value_template: '{{ value_json.moisture }}'  
+
