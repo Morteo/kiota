@@ -1,0 +1,235 @@
+# This file can be included in your hass configuration.yaml 
+# add the below in the "homeassistant:" section
+#
+#  packages: 
+#    kiota_thermosat: !include /home/pi/working/kiota/devices/thermostat/hass.yaml
+#
+# some optional customisations, again put in the "homeassistant" section
+#
+#  customize_glob:
+#    "sensor.*_temperature":
+#      icon: mdi:thermometer-lines
+#    "device_tracker.*_mcu":
+#      icon: mdi:access-point-network
+#
+#    hidden: true
+#
+
+group:
+
+  thermostat_internals:
+    name: "Thermostat Internals"
+    entities:
+      -   device_tracker.thermostat_mcu
+      -   binary_sensor.thermostat_button
+      -   automation.thermostat_button
+      -   switch.heating
+      -   automation.heating
+      -   automation.heating_automation
+      -   automation.update_thermostat_display
+
+  thermostat_view:
+    name: "Thermostat View"
+    entities:
+      -   binary_sensor.heating_relay
+      -   sensor.near_north_temperature
+      -   sensor.thermostat_temperature
+      -   input_boolean.heating_automatic
+      -   input_number.threshold_temperature
+      -   calendar.heating_scheduled
+
+  thermostat:
+    name: "Thermostat"
+    view: yes
+    icon: mdi:radiator
+    entities:
+      -   group.thermostat_view
+      -   group.thermostat_internals
+
+switch:
+  
+# Used by Google Assitant and Thermostat Button. Not the actual heating state
+  - name: "heating"
+    platform: mqtt
+    icon: mdi:radiator
+    state_topic: "/hass/thermostat/heating"
+    command_topic: "/hass/thermostat/heating"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+
+binary_sensor:
+
+# Actually controls the physical relay to the boiler 
+  - name: "heating_relay"
+    platform: mqtt
+    icon: mdi:radiator
+    state_topic: "/kiota/thermostat/heating_relay"
+#    command_topic: "/kiota/thermostat/heating_relay/set"
+    payload_on: true
+    payload_off: false
+#    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+
+    # physical button pressed
+  - name: "Thermostat Button"
+    platform: mqtt
+    icon: mdi:toggle-switch
+    state_topic: "/kiota/thermostat/red_button"
+#    command_topic: "/kiota/thermostat/red_button/set"
+    payload_on: true
+    payload_off: false
+#    optimistic: false
+    qos: 0
+#    retain: true
+    value_template: '{{ value_json.state }}'  
+
+input_number:
+
+  threshold_temperature:
+    name: "Threshold Temperature"
+    mode: slider
+    icon: mdi:thermometer
+    initial: 10
+    min: -5
+    max: 35
+    step: 1
+    unit_of_measurement: '°C'
+
+input_boolean:
+
+  heating_automatic:
+    name: "Heating Automatic"
+    initial: on
+    icon: mdi:auto-fix
+
+sensor:
+
+  - name: "Thermostat Temperature"
+    platform: mqtt
+    state_topic: "/kiota/thermostat/dht"
+    qos: 0
+    unit_of_measurement: "°C"
+    value_template: '{{ value_json.temperature | round(1)}}'  
+
+  - name: "Thermostat Humidity"
+    platform: mqtt
+    state_topic: "/kiota/thermostat/dht"
+    qos: 0
+    unit_of_measurement: "%"
+    value_template: '{{ value_json.humidity | round(1)}}'  
+
+automation:
+
+  - alias: 'Thermostat Button'
+    initial_state: True
+    hide_entity: False
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.thermostat_button
+        to: 'on'
+    action:
+      - service: switch.toggle
+        entity_id: switch.heating
+
+  - alias: 'Heating'
+    initial_state: True
+    hide_entity: False
+    trigger:
+      - platform: state
+        entity_id: switch.heating
+    action:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.heating_automatic
+      - service: mqtt.publish
+        data_template:
+          topic: '/kiota/thermostat/heating_relay/set'
+          payload: >
+            {% if is_state("switch.heating", "on")%}on{% else %}off{% endif %}
+#      # after manual command set to manual overrride for an hour
+#      - delay: '00:01:00'
+#      - service: switch.turn_off
+#        entity_id: switch.heating
+#    - service: automation.trigger
+#      entity_id: automation.Update_thermostat_display
+
+  - alias: 'Heating Automatic'
+    initial_state: True
+    hide_entity: False
+    trigger:
+      - platform: state
+        entity_id: input_boolean.heating_automatic
+    action:
+      - service: switch.turn_off
+        entity_id: sitch.heating
+
+  - alias: 'Heating Automation'
+    initial_state: True
+    hide_entity: False
+    trigger:
+      - platform: state
+        entity_id: >
+          input_boolean.heating_automatic,
+          calendar.heating_scheduled,
+          sensor.thermostat_temperature,
+          input_number.threshold_temperature
+    action:
+      - condition: and
+        conditions:
+          - condition: state
+            entity_id: input_boolean.heating_automatic
+            state: 'on'
+      - service: mqtt.publish
+        data_template:
+          topic: '/kiota/thermostat/heating_relay/set'
+          payload: >
+            {% if 
+              is_state("input_boolean.heating_automatic", "on") and 
+              is_state("input_boolean.heating_manual", "off") and 
+              (
+                is_state("calendar.heating_scheduled", "on") or 
+                float(states("sensor.thermostat_temperature")) < float(states("input_number.threshold_temperature"))
+              )
+            %}on{% else %}off{% endif %}
+#      - service: service_template: >
+#          {% if states.binary_sensor.heating_relay.state %}
+#            switch.turn_on
+#          {% else %}
+#            switch.turn_off
+#          {% endif %}
+#        entity_id: switch.heating
+
+  - alias: 'Update Thermostat Display'
+    initial_state: True
+    hide_entity: False
+    trigger:
+      - platform: state
+        entity_id: >
+          input_boolean.heating_automatic,
+          sensor.thermostat_temperature,
+          sensor.near_north_temperature, 
+          binary_sensor.heating_relay
+    action:
+      - service: mqtt.publish
+        data_template:
+          topic: '/kiota/thermostat/display/set'
+          payload: >
+            {
+             "heating_state":  {% if is_state("binary_sensor.heating_relay", "on") %}True{% else %}False{% endif %},
+             "msg": {% if is_state("input_boolean.heating_automatic", "on")%}"Auto"{% else %}"Manual"{% endif %},
+             "inside_temp": "{{ states("sensor.thermostat_temperature") }}"
+             "outside_temp": "{{ states("sensor.near_north_temperature") }}"
+            }
+            
+            
+                                      
+            
+            
+            
+            
+            
