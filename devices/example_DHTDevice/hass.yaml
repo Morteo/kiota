@@ -2,7 +2,7 @@
 # add the below in the "homeassistant:" section
 #  
 #  packages: 
-#    kiota_kitchen: !include /home/pi/working/kiota/devices/example_DHTDevice.yaml
+#    kiota_kitchen: !include /home/pi/working/kiota/devices/example_DHTDevice/hass.yaml
 
 sensor:
 
