@@ -3,7 +3,7 @@
 KIOTA=.
 PORT=/dev/ttyUSB0
 DEVICE=example
-SECRETS=$KIOTA/devices/__secrets__.json
+SECRETS=$KIOTA/devices/__secrets__.py
 
 usage()  
 {  
@@ -12,9 +12,9 @@ usage()
   echo "where:"
   echo "  [port] is the port used to connect to the remote microcontroller (default: /dev/ttyUSB0)"
   echo "  [KIOTA] is the directory where KIOTA is installed (default: .)"
-  echo "  [device] is the device name used to identify the configuration file to be used (default: example)"
-  echo "  [secrets_file] is the secret configuration file (default: ./devices/__secrets__.json)"
-  echo "  [config_file] is the device configuration file and overrides [device] (default: ./devices/example.json)"
+  echo "  [device] is the device name used to identify the configuration folder to be used (default: example)"
+  echo "  [secrets_file] is the secret configuration file (default: ./devices/__secrets__.py)"
+  echo "  [config_folder] is the device configuration fodler that containts config.py and overrides [device] (default: ./devices/example)"
   echo ""
   echo "e.g. $(basename "$0") -d example"
   echo ""
@@ -58,7 +58,7 @@ if [ -n "${DEVICE}" ] && [ -n "${CONFIG}" ] ; then
 fi
 
 if [ -z "${CONFIG+set}" ]; then
-  CONFIG=$KIOTA/devices/$DEVICE.json
+  CONFIG=$KIOTA/devices/$DEVICE/
 else
   DEVICE="<none>"
 fi
@@ -69,6 +69,13 @@ echo "  on port: $PORT"
 echo "  device: $DEVICE"
 echo "  with device configuration: $CONFIG"
 echo "  and secrets: $SECRETS"
+
+echo "::: Remote device information :::"
+(
+  set -x #echo on
+  ampy --port $PORT run $KIOTA/util/mcu_port_diag.py
+  ampy --port $PORT run $KIOTA/util/mcu_sys.py
+)
 
 echo "::: Wipe the remote device :::"
 read -p " Delete all files on the remote device (y/n)?" choice
@@ -85,37 +92,63 @@ case "$choice" in
     ;;
 esac
 
-
-echo "::: Adding the device configuration and secrets :::"
-
+echo "::: Remote device free file space :::"
 (
   set -x #echo on
-  ampy --port $PORT mkdir config
-  ampy --port $PORT put $CONFIG /config/config.json
-  ampy --port $PORT put $SECRETS /config/__secrets__.json
+  ampy --port $PORT run $KIOTA/util/mcu_df.py
 )
 
+function ampy_put_recursive()
+{
+
+  if [ "$2" != "/" ]; then
+  (
+    set -x #echo on
+    ampy --port $PORT mkdir ${2%/}
+  )
+  fi
+  
+  for i in $( ls $1 -p ); do
+    (
+      case "$i" in
+      __pycache__/)
+          echo "    Skipping $i"
+          ;;
+      *.yaml)
+          echo "    Skipping $i"
+          ;;
+      */)
+          ampy_put_recursive $1$i $2$i
+          ;;
+      *)
+          (
+            set -x #echo on
+            ampy --port $PORT put $1$i $2$i
+          )
+          ;;
+      esac    
+    )
+  done
+}
+
+echo "::: Adding the device configuration and secrets :::"
+(
+  set -x #echo on
+  ampy --port $PORT put $SECRETS
+)
+ampy_put_recursive $CONFIG /
 
 echo "::: Adding the KIOTA files :::"
 
-for i in $( ls $KIOTA/src/micropython | grep -v / ); do
-  (
-    set -x #echo on
-    ampy --port $PORT put $KIOTA/src/micropython/$i $i
-  )
-done
 
+ampy_put_recursive $KIOTA/src/micropython/ /
+ampy_put_recursive $KIOTA/src/kiota/ /kiota/
+
+echo "::: Remote device free file space :::"
 (
   set -x #echo on
-  ampy --port $PORT mkdir dg_mqtt
+  ampy --port $PORT run $KIOTA/util/mcu_df.py
 )
-
-for i in $( ls $KIOTA/src/dg_mqtt | grep -v / ); do
-  (
-    set -x #echo on
-    ampy --port $PORT put $KIOTA/src/dg_mqtt/$i /dg_mqtt/$i
-  )
-done
 
 echo "::: Reset micropython on the remote device :::"
 read -p " (h)ard, (s)oft or (n)o reset ?" choice
@@ -138,6 +171,12 @@ case "$choice" in
     echo "    No Reset"
     ;;
 esac
+
+echo "::: Remote device memory information :::"
+(
+  set -x #echo on
+  ampy --port $PORT run $KIOTA/util/mcu_mem_info.py
+)
 
 echo "::: Done :::"
 
