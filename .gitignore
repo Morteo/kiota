@@ -1,6 +1,9 @@
 
 # Configuration files with sensitive content
 __secret__/
+__secrets__/
+__secrets__*.json
+__secrets__*.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
