@@ -1,128 +1,128 @@
-       
 import machine
-import json
-import utime
 
-from dg_mqtt.Device import Device
-
-############################################
-############################################
-# Skeleton Outline - Only !!!!!!!!!!!!!!!!
-############################################
-############################################
-
+from kiota.Device import Device
 
 class DisplayDevice(Device):
 
-  default_config = {
-          "poll_frequency": None,
-          "publish_changes_only": False,
+  width = 128
+  height = 64
+  display_type = "SSD1306_I2C"
+  
+  class I2C:
+    bus = -1        # -1 tells it to use bitbanging.
+    gpio_scl = 4    # clock, not used for non-bitbanging hardware implementatino 
+    gpio_sda = 5    # data, not used for non-bitbanging hardware implementatino 
+    # not supported, uses default.
+    # sda = 0x3c  #  device_addr - display I2C address
+    # not supported, uses default.
+    # max_freq = 25000, #slow
+    # not required to know which pin
+    # gpio_res = 0 # Reset.
     
-          "width": 128,
-          "height": 64,
-    
-          "display_type": "SSD1306_I2C",
-    
-          "I2C": {
-            "bitbanging_mode": True, # Use software implementation?
-            "id": -1, # use -1 for bitbanging
-            "freq": 800000,
-#            "gpio_res": 0 # Reset
-            "gpio_scl": 4, # clock, not used for non-bitbanging hardware implementatino 
-            "gpio_sda": 5 # data, not used for non-bitbanging hardware implementatino 
-          },
-          "SPI": {
-            "bitbanging_mode": False, # Use software implementation?
-            "id": 1, # use -1 for bitbanging
-            "baudrate": 1000000,
-            "polarity": 0, # the idle state of SCK,  For bitbanging use 1
-            "phase": 0, # 0 is sample on the first edge of serial clock and 1 for the second
-            "gpio_sck": 14, # Serial Clock, not used for non-bitbanging hardware implementatino 
-            "gpio_mosi": 13, # Master Output, Slave Input, not used for non-bitbanging hardware implementatino 
-            "gpio_miso": 12, # Master Input, Slave Output, not used for non-bitbanging hardware implementatino 
-            "gpio_dc": 12,  # Data / Command. Same as MISO
-            "gpio_res": 5, # Reset
-            "gpio_cs": 15 # Chip Select
-          }
-  }
+  class SPI:
+    id = 1                    # use -1 for bitbanging
+#    bitbanging_mode = False   # Use software implementation?
+#    baudrate = 1000000
+#    polarity = 0              # the idle state of SCK,  For bitbanging use 1
+#    phase = 0                 # 0 is sample on the first edge of serial clock and 1 for the second
+#    gpio_sck = 14             # Serial Clock, not used for non-bitbanging hardware implementatino 
+#    gpio_mosi = 13            # Master Output, Slave Input, not used for non-bitbanging hardware implementatino 
+#    gpio_miso = 12            # Master Input, Slave Output, not used for non-bitbanging hardware implementatino 
+#    gpio_dc = 12              # Data / Command. Same as MISO
+#    gpio_res = 5              # Reset
+#    gpio_cs = 15              # Chip Select
+
+  i2c = I2C()
+  spi = SPI()
   
   def __init__(self, config):
+    
+    self.update_display_function = DisplayDevice.update_display
+    
     super().__init__(config)
   
   def configure(self, config):
+    
     super().configure(config)
 
+    import ssd1306
+
     self.display = None
-    
-    if self.config["display_type"] == "SSD1306_I2C":
-      
-      i2c = None
 
-      if self.config["I2C"]["bitbanging_mode"]:
-        
-        i2c = machine.I2C(-1,
-                  freq=self.config["I2C"]["freq"], 
-                  scl=machine.Pin(self.config["I2C"]["gpio_scl"],
-                  sda=machine.Pin(self.config["I2C"]["gpio_sda"])
+    try:
+      
+      if self.display_type == "SSD1306_I2C":
 
-      else:
-      
-        i2c = machine.I2C(self.config["SPI"]["id"], 
-                  freq=self.config["I2C"]["freq"])
-      
-      import ssd1306
+          i2c = machine.I2C(
+                    self.i2c.bus,
+                    scl=machine.Pin(self.i2c.gpio_scl),
+                    sda=machine.Pin(self.i2c.gpio_sda)
+#                    freq=self.i2c.max_freq
+          )
 
-      self.display = ssd1306.SSD1306_I2C(
-                  self.config["width"], 
-                  self.config["height"], 
-                  i2c)
-                                   
-      
-    elif self.config["display_type"] == "SSD1306_SPI":
+#          addrs = i2c.scan()
+#          print("Scanning I2C devices:", [hex(x) for x in addrs])
+#          if self.sla not in addrs:
+#            import ubinascii
+#            print("ICT device not detected on address", ubinascii.hexlify(device_addr))
 
-      spi = None
-      
-      if self.config["SPI"]["bitbanging_mode"]:
-        
-        spi = machine.SPI(self.config["SPI"]["id"], 
-                  baudrate=self.config["SPI"]["baudrate"], 
-                  polarity=self.config["SPI"]["polarity"], 
-                  phase=self.config["SPI"]["phase"],
-                  sck=machine.Pin(self.config["SPI"]["gpio_sck"],
-                  mosi=machine.Pin(self.config["SPI"]["gpio_mosi"],
-                  miso=machine.Pin(self.config["SPI"]["gpio_miso"])
-        
-      else:
-      
-        spi = machine.SPI(self.config["SPI"]["id"], 
-                  baudrate=self.config["SPI"]["baudrate"], 
-                  polarity=self.config["SPI"]["polarity"], 
-                  phase=self.config["SPI"]["phase"])
-      
-      import ssd1306
+          self.display = ssd1306.SSD1306_I2C(
+                    self.width, 
+                    self.height, 
+                    i2c
+          )
 
-      self.display = ssd1306.SSD1306_SPI(
-                  self.config["width"], 
-                  self.config["height"], 
-                  spi,
-                  machine.Pin(self.config["SPI"]["gpio_dc"],
-                  machine.Pin(self.config["SPI"]["gpio_res"],
-                  machine.Pin(self.config["SPI"]["gpio_cs"])
+          self.display.poweron()
+
+      elif self.display_type == "SSD1306_SPI":
+
+        spi = None
+
+        if self.bitbanging_mode:
+
+          spi = machine.SPI(self.spi.id, 
+                    baudrate=self.spi.baudrate,
+                    polarity=self.spi.polarity, 
+                    phase=self.spi.phase,
+                    sck=machine.Pin(self.spi.gpio_sck),
+                    mosi=machine.Pin(self.spi.gpio_mosi),
+                    miso=machine.Pin(self.spi.gpio_miso))
+
+        else:
+
+          spi = machine.SPI(self.spi.id, 
+                    baudrate=self.spi.baudrate, 
+                    polarity=self.spi.polarity, 
+                    phase=self.spi.phase)
+
+        self.display = ssd1306.SSD1306_SPI(
+                    self.width, 
+                    self.height, 
+                    spi,
+                    machine.Pin(self.spi.gpio_dc),
+                    machine.Pin(self.spi.gpio_res),
+                    machine.Pin(self.spi.gpio_cs))
+
+    except OSError as e:
+      import kiota.Util as Util
+      Util.log(self,"failed to configure display", e)
                               
   def write(self, payload):
-    return { "display": bool(DisplayDevice.display_exec(self.display, payload)) }
+    
+    ok = False
+    
+    try:
+      ok = bool(self.update_display_function(self.display, payload))
+    except Exception as e:
+      import kiota.Util as Util
+      Util.log(self,"failed to update display", e)
+      
+    return { "display": ok }
 
-  def display_exec(display, command):
+  def update_display(display, command):
 
-# display.fill(0)
-# display.pixel(0, 0, 1)
-# display.text('Hello', 0, 0)
-# display.text('World', 10, 20)
-# display.show()
-# display.invert(True)
-# display.invert(False)
+    display.fill(0)
+    display.text(command, 0, 0)
+    display.show()
 
-      loc = { "display": display }
-      exec(command, globals(), loc)
-
-    return True     
+    return True

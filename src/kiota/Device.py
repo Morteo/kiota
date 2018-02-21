@@ -3,22 +3,20 @@ import time
 
 class Device:
   
+  id = None
+  freq = None
+  just_changes = False
+  debounce = 0    
+  
   last_push = 0
   last_payload = None
-  default_config = {
-    "id": None,
-    "description": None,
-    "poll_frequency": None,
-    "publish_changes_only": False
-  }
-  
+
   def __init__(self, config):
     self.configure(config)
   
   def configure(self, config):
-    self.config = Device.default_config.copy()
-    self.config.update(self.default_config)
-    self.config.update(config)
+    from kiota.Configurator import Configurator
+    Configurator.apply(self, config)
       
   def read(self):
     pass
@@ -30,19 +28,19 @@ class Device:
     
     self.gateway = gateway
 
-    if self.config['id'] is not None:
-      self.topic =  gateway.topic + "/" + self.config['id']
+    if self.id is not None:
+      self.topic = "{}/{}".format(gateway.topic, self.id)
     else:
-      self.topic =  gateway.topic + "/" + self.__class__.__name__
-      if self.config['gpio'] is not None:
-        self.topic =  self.topic + "/" + str(self.config["gpio"])
+      self.topic = "{}/{}".format(gateway.topic, self.__class__.__name__)
+      if self.gpio is not None:
+        self.topic = "{}/{}".format(self.topic, str(self.gpio))
         
     payload = { 'connected': self.topic }
     self.gateway.publish(gateway.topic, json.dumps(payload))
       
-    self.gateway.subscribe(self.topic+"/configure")
-    self.gateway.subscribe(self.topic+"/get")
-    self.gateway.subscribe(self.topic+"/set")
+#    self.gateway.subscribe("{}/configure".format(self.topic))
+    self.gateway.subscribe("{}/get".format(self.topic))
+    self.gateway.subscribe("{}/set".format(self.topic))
     
   def do_message(self, topic, b_payload):
 
@@ -61,10 +59,10 @@ class Device:
       self.publish(self.write(payload))
       return True
 
-    elif topic.endswith("/configure"):
-      
-      self.configure(payload)
-      return True
+#    elif topic.endswith("/configure"):
+#      
+#      self.configure(payload)
+#      return True
 
     return False
 
@@ -73,7 +71,7 @@ class Device:
     if payload is None:
       return
     
-    if self.config["publish_changes_only"] is False or payload != self.last_payload:
+    if self.just_changes is False or payload != self.last_payload:
       try:
         self.gateway.publish(self.topic, json.dumps(payload))
       except Exception as e:
@@ -83,14 +81,23 @@ class Device:
 
   def push(self):
                         
-    if self.config["poll_frequency"] is None or self.config["poll_frequency"] < 0:
+    if self.freq is None or self.freq < 0:
       return False
     
-    if time.time() > self.last_push + self.config["poll_frequency"]:
+    if time.time() > self.last_push + self.freq:
 
+      payload = self.read()
+      
+      if self.debounce > 0:
+        for i in range(self.debounce,0,-1):
+          time.sleep(0.01)
+          if self.read() != payload:
+#            import kiota.Util as Util
+#            Util.log(self,"BOUNCE payload: '{}'".format( payload))
+            return False
+
+      self.publish(payload)
       self.last_push = time.time()
-      self.publish(self.read())
-
       return True
                         
     return False
