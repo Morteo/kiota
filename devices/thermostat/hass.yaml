@@ -25,6 +25,7 @@ group:
       -   automation.thermostat_button_listener
       -   switch.heating
       -   automation.heating_listener
+      -   automation.heating_relay_listener
       -   automation.heating_automation
       -   automation.thermostat_display_updater
       -   device_tracker.thermostat_mcu
@@ -190,9 +191,6 @@ automation:
             {% else %}
               manual off
             {% endif %}
-#      # after manual command set to manual overrride for an hour
-#      - delay: '00:01:00'
-#      - service: 
 
   - alias: 'Thermostat automation'
     initial_state: True
@@ -222,6 +220,31 @@ automation:
               )
             %}on{% else %}off{% endif %}
 
+  # if the mode is set to auto and switch.heating is left set to "on"  
+  # then a future "ok Google turn the heating on" doesnt't work as 
+  # state of switch.heating is already on and doesn't change consquently  
+  # the automation.heating_listener is not fired
+  # There must be a way of setting the state of switch from a variable or with an "if" but can't find it 
+  - alias: 'Heating relay listener'
+    initial_state: True
+    hide_entity: False
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.heating_relay
+    action:
+      - condition: state
+        entity_id: input_select.thermostat_mode
+        state: 'auto'
+      - service: automation.turn_off
+        entity_id: automation.heating_listener
+      - service: mqtt.publish
+        data_template:
+          topic: "/hass/thermostat/heating"
+          payload: '{{ states("binary_sensor.heating_relay") }}'
+      - delay: 00:00:02
+      - service: automation.turn_on
+        entity_id: automation.heating_listener
+
   - alias: 'Thermostat display updater'
     initial_state: True
     hide_entity: False
@@ -244,3 +267,29 @@ automation:
              "inside_temp": "{{ states("sensor.thermostat_temperature") }}"
              "outside_temp": "{{ states("sensor.near_north_temperature") }}"
             }
+            
+            
+            
+            
+# TO DO 
+# Change the icon of the thermostat_mode based on the value
+#  switch:
+#  - platform: template
+#    switches:
+#      garage:
+#        value_template: "{{ is_state('cover.garage_door', 'on') }}"
+#        turn_on:
+#          service: cover.open_cover
+#          data:
+#            entity_id: cover.garage_door
+#        turn_off:
+#          service: cover.close_cover
+#          data:
+#            entity_id: cover.garage_door
+#        icon_template: >-
+#          {% if is_state('cover.garage_door', 'open') %}
+#            mdi:garage-open
+#          {% else %}
+#            mdi:garage
+#          {% endif %}
+            
