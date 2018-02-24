@@ -254,8 +254,8 @@ automation:
           input_select.thermostat_mode,
           sensor.thermostat_temperature,
           sensor.near_north_temperature,
-          switch.heating_relay
-#          binary_sensor.heating
+          binary_sensor.heating_relay
+#          switch.heating
     action:
       - service: mqtt.publish
         data_template:
