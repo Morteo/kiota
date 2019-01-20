@@ -1,0 +1,52 @@
+# This file can be included in your hass configuration.yaml 
+# add the below in the "homeassistant:" section
+#
+#  packages: 
+#    kiota_thermosat: !include /home/pi/working/kiota/devices/power_strip/hass.yaml
+#
+# some optional customisations, again put in the "homeassistant" section
+#
+#  customize_glob:
+#    "sensor.*_temperature":
+#      icon: mdi:thermometer-lines
+#    "device_tracker.*_mcu":
+#      icon: mdi:access-point-network
+#
+#    hidden: true
+#
+
+group:
+
+  power_strip:
+    name: "Power Strip"
+    entities:
+      -   switch.left_socket
+      -   switch.right_socket
+    
+switch:
+  
+  - name: "Left Socket"
+    platform: mqtt
+    icon: mdi:power-plug
+    state_topic: "/kiota/power_strip/left_socket"
+    command_topic: "/kiota/power_strip/left_socket/set"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+  
+  - name: "Right Socket"
+    platform: mqtt
+    icon: mdi:power-plug
+    state_topic: "/kiota/power_strip/right_socket"
+    command_topic: "/kiota/power_strip/right_socket/set"
+    payload_on: true
+    payload_off: false
+    optimistic: false
+    qos: 0
+    retain: true
+    value_template: '{{ value_json.state }}'  
+
+
